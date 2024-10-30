@@ -17,7 +17,7 @@ using namespace std;
 #define P2SH   1
 #define BECH32 2
 
-//============== HIIU::RIPEMD160.H - start ==============================================================================
+//============== RIPEMD160.H - start ==============================================================================
 namespace _ripemd160
 {
 	void inline Initialize(uint32_t *s)	{
@@ -248,8 +248,8 @@ void ripemd160_32(unsigned char *input, unsigned char *digest)
     _ripemd160::Transform(s, input);
 }
 
-//============== HIIU::RIPEMD160.H - end ===========================================================================
-//============== HIIU::SHA256 - start ==============================================================================
+//============== RIPEMD160.H - end ===========================================================================
+//============== SHA256 - start ==============================================================================
 namespace _sha256
 {
 	static const unsigned char pad[64] = { 0x80 };
@@ -611,8 +611,8 @@ void sha256_checksum(uint8_t *input, int length, uint8_t *checksum) {
     // std::cout<<std::endl;  //solved problem 
 }
 
-//============== HIIU::SHA256 - start ==============================================================================
-//============== HIIU::BASE58 - start ==============================================================================
+//============== SHA256 - start ==============================================================================
+//============== BASE58 - start ==============================================================================
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -643,8 +643,8 @@ std::string EncodeBase58(const unsigned char *pbegin, const unsigned char *pend)
 
     return ret;
 }
-//============== HIIU::BASE58 - end ================================================================================
-//============== HIIU::INT.H - start ================================================================================
+//============== BASE58 - end ================================================================================
+//============== INT.H - start ================================================================================
 //---------- INT.H
 #define NB64BLOCK 5
 #define NB32BLOCK 10
@@ -1172,9 +1172,9 @@ std::string Int::GetBaseN(int n, char* charset) {
 
 	return ret;
 }
-//============== HIIU::INT.CPP - end ================================================================================
+//============== INT.CPP - end ================================================================================
 
-//============== HIIU::INT->INTMOD.CPP - start ================================================================================
+//============== INT->INTMOD.CPP - start ================================================================================
 #include <emmintrin.h>
 
 static Int     _P;       // Field characteristic
@@ -1604,8 +1604,8 @@ void Int::ModSquareK1(Int* a)
 	bits64[4] = 0;
 }
 
-//============== HIIU::INT->INTMOD.CPP - end ================================================================================
-//============== HIIU::POINT - start ================================================================================
+//============== INT->INTMOD.CPP - end ================================================================================
+//============== POINT - start ================================================================================
 class Point
 {
 	public:
@@ -1656,9 +1656,9 @@ std::string Point::toString()
     return ret;
 }
 
-//============== HIIU::POINT - end ================================================================================
+//============== POINT - end ================================================================================
 
-//============== HIIU::CSHA256 - start ================================================================================
+//============== CSHA256 - start ================================================================================
 
 class CSHA256
 	{
@@ -1735,8 +1735,8 @@ void sha256(unsigned char *input, int length, unsigned char *digest) {
 	sha.Write(input, length);
 	sha.Finalize(digest);
 }
-//============== HIIU::CSHA256 - end ================================================================================
-//============== HIIU::SECP256K - start ================================================================================
+//============== CSHA256 - end ================================================================================
+//============== SECP256K - start ================================================================================
 class Secp256K1
 {
 	public:
@@ -1959,8 +1959,8 @@ Point Secp256K1::DoubleDirect(Point& p)
 
 	return r;
 }
-//============== HIIU::SECP256K - end ================================================================================
-//============== HIIU::BECH_32 - start ================================================================================
+//============== SECP256K - end ================================================================================
+//============== BECH_32 - start ================================================================================
 	static const char* charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 	
 //----------------------------------------------------------
@@ -2047,29 +2047,29 @@ int segwit_addr_encode(char *output, const char *hrp, int witver, const uint8_t 
 	return bech32_encode(output, hrp, data, datalen);
 }
 
-//============== HIIU::BECH_32 - end ================================================================================
+//============== BECH_32 - end ================================================================================
 
 
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
-//============== HIIU::HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
+//============== HIIU =============================================================================
 
-class Hiiu 
+class Bitcoin 
 {
 	public:
 		Point privToPubkey(char* p_hex); //return POINT
@@ -2083,7 +2083,7 @@ class Hiiu
 };  
 //-------------------------------------------------------------------- 
 
-Point Hiiu::privToPubkey(char* p_hex)
+Point Bitcoin::privToPubkey(char* p_hex)
 {
 	char* priv_hex = p_hex;
 
@@ -2101,7 +2101,7 @@ Point Hiiu::privToPubkey(char* p_hex)
 }
 
 //--------------------------------------------------------------------
- void Hiiu::privToHash160(int type, char* p_hex, uint32_t* _hash160, bool isCompressed)
+ void Bitcoin::privToHash160(int type, char* p_hex, uint32_t* _hash160, bool isCompressed)
  {
 
 	char* priv_hex = p_hex;   // char* priv_hex = "2832ed74f2b5e35ee"; 
@@ -2147,7 +2147,7 @@ Point Hiiu::privToPubkey(char* p_hex)
 
 //--------------------------------------------------------------------
 
-std::string Hiiu::privToAddr(int type, char* p_hex, bool isCompressed)
+std::string Bitcoin::privToAddr(int type, char* p_hex, bool isCompressed)
 {
 	char* priv_hex = p_hex;   // char* priv_hex = "2832ed74f2b5e35ee"; 
 
@@ -2188,7 +2188,7 @@ std::string Hiiu::privToAddr(int type, char* p_hex, bool isCompressed)
 	return addr;
  }
 //--------------------------------------------------------------------
-void Hiiu::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool isCompressed)
+void Bitcoin::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool isCompressed)
 {
 	Secp256K1* hiiu_secp = new Secp256K1();   
 	hiiu_secp->Init();	
@@ -2224,7 +2224,7 @@ void Hiiu::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool is
 	delete hiiu_secp;
 } 
 //--------------------------------------------------------------------
-std::string Hiiu::pubkeyToAddr(int type, Point& pubKey, bool isCompressed)
+std::string Bitcoin::pubkeyToAddr(int type, Point& pubKey, bool isCompressed)
 {
 	Secp256K1*	hiiu_secp = new Secp256K1();   
 	hiiu_secp->Init();	
@@ -2260,7 +2260,7 @@ std::string Hiiu::pubkeyToAddr(int type, Point& pubKey, bool isCompressed)
 }
 
 //--------------------------------------------------------------------
-std::string Hiiu::hash160ToAddr(uint32_t* _hash160, bool isCompressed){
+std::string Bitcoin::hash160ToAddr(uint32_t* _hash160, bool isCompressed){
 	// _hash160[] = 1784337440; 1882531190; -1293883124; -1810242794; -1514644173;
 	// 	h[0]      = 1784337440; 1882531190;  3001084172;  2484724502;  2780323123 ;
 	Secp256K1* hiiu_secp = new Secp256K1();   
@@ -2287,16 +2287,16 @@ int main(){
 	std::cout<<std::endl<<" -------------------------------------------- ";
 
 	bool isCompressed = 1;
-	Hiiu hiiu;
+	Bitcoin bitcoin; 
 
 	//priv --> Addr
-	std::string addr = hiiu.privToAddr(P2PKH, "2832ed74f2b5e35ee", isCompressed);
+	std::string addr = bitcoin.privToAddr(P2PKH, "2832ed74f2b5e35ee", isCompressed);
 	std::cout << std::endl << "privToAddr addr : " << addr;
-	addr = hiiu.privToAddr(P2PKH, "2832ed74f2b5e35ee", !isCompressed);
+	addr = bitcoin.privToAddr(P2PKH, "2832ed74f2b5e35ee", !isCompressed);
 	std::cout << std::endl << "privToAddr addr : " << addr;
-	addr = hiiu.privToAddr(P2SH, "2832ed74f2b5e35ee", isCompressed);
+	addr = bitcoin.privToAddr(P2SH, "2832ed74f2b5e35ee", isCompressed);
 	std::cout << std::endl << "privToAddr addr : " << addr;
-	addr = hiiu.privToAddr(BECH32, "2832ed74f2b5e35ee", isCompressed);
+	addr = bitcoin.privToAddr(BECH32, "2832ed74f2b5e35ee", isCompressed);
 	std::cout << std::endl << "privToAddr addr : " << addr;
 	std::cout << "\n\n -------------------------------------------- \n";
 
@@ -2304,23 +2304,23 @@ int main(){
 
 	//priv --> hash160 
 	uint32_t h[5]; 
-	hiiu.privToHash160(P2PKH, "2832ed74f2b5e35ee", h, isCompressed);
-	hiiu.privToHash160(P2PKH, "2832ed74f2b5e35ee", h, !isCompressed);
-	hiiu.privToHash160(P2SH, "2832ed74f2b5e35ee", h, isCompressed);
-	hiiu.privToHash160(BECH32, "2832ed74f2b5e35ee", h, isCompressed);
+	bitcoin.privToHash160(P2PKH, "2832ed74f2b5e35ee", h, isCompressed);
+	bitcoin.privToHash160(P2PKH, "2832ed74f2b5e35ee", h, !isCompressed);
+	bitcoin.privToHash160(P2SH, "2832ed74f2b5e35ee", h, isCompressed);
+	bitcoin.privToHash160(BECH32, "2832ed74f2b5e35ee", h, isCompressed);
 	std::cout<<"\n\n -------------------------------------------- \n";
 
 
 
 	//priv --> Pubkey
-	Point publicKey = hiiu.privToPubkey("2832ed74f2b5e35ee");
+	Point publicKey = bitcoin.privToPubkey("2832ed74f2b5e35ee");
 			// std::cout<<std::endl<<"\n.\n.\n.\n---- public key : " << publicKey.toString();
 	//pubkey --> Hash160
 	uint32_t hash160[5]; 
-	hiiu.pubkeyToHash160(P2PKH, publicKey, hash160, isCompressed);
-	hiiu.pubkeyToHash160(P2PKH, publicKey, hash160, !isCompressed);
-	hiiu.pubkeyToHash160(P2SH, publicKey, hash160, isCompressed);
-	hiiu.pubkeyToHash160(BECH32, publicKey, hash160, isCompressed);			
+	bitcoin.pubkeyToHash160(P2PKH, publicKey, hash160, isCompressed);
+	bitcoin.pubkeyToHash160(P2PKH, publicKey, hash160, !isCompressed);
+	bitcoin.pubkeyToHash160(P2SH, publicKey, hash160, isCompressed);
+	bitcoin.pubkeyToHash160(BECH32, publicKey, hash160, isCompressed);			
 			// for (int i = 0; i < 5; i++){	printf("\n --- _hash160[] : %d ", get_h[i]);
 	std::cout<<"\n\n -------------------------------------------- \n";
 
@@ -2328,13 +2328,13 @@ int main(){
 
 
 	// pubkey --> addr 
-	std::string addr1 = hiiu.pubkeyToAddr(P2PKH, publicKey, isCompressed);
+	std::string addr1 = bitcoin.pubkeyToAddr(P2PKH, publicKey, isCompressed);
 	std::cout << "\npubkeyToAddr addr1 : "<<addr1;
-	addr1 = hiiu.pubkeyToAddr(P2PKH, publicKey, !isCompressed);
+	addr1 = bitcoin.pubkeyToAddr(P2PKH, publicKey, !isCompressed);
 	std::cout << "\npubkeyToAddr addr1 : "<<addr1;
-	addr1 = hiiu.pubkeyToAddr(P2SH, publicKey, isCompressed);
+	addr1 = bitcoin.pubkeyToAddr(P2SH, publicKey, isCompressed);
 	std::cout << "\npubkeyToAddr addr1 : "<<addr1;
-	addr1 = hiiu.pubkeyToAddr(BECH32, publicKey, isCompressed);
+	addr1 = bitcoin.pubkeyToAddr(BECH32, publicKey, isCompressed);
 	std::cout << "\npubkeyToAddr addr1 : "<<addr1;
 	std::cout<<"\n\n -------------------------------------------- \n";
 
