@@ -17,7 +17,7 @@ using namespace std;
 #define P2SH   1
 #define BECH32 2
 
-//============== HIIU::RIPEMD160.H ==============================================================================
+//============== HIIU::RIPEMD160.H - start ==============================================================================
 namespace _ripemd160
 {
 	void inline Initialize(uint32_t *s)	{
@@ -248,6 +248,7 @@ void ripemd160_32(unsigned char *input, unsigned char *digest)
     _ripemd160::Transform(s, input);
 }
 
+//============== HIIU::RIPEMD160.H - end ===========================================================================
 //============== HIIU::SHA256 - start ==============================================================================
 namespace _sha256
 {
@@ -609,7 +610,9 @@ void sha256_checksum(uint8_t *input, int length, uint8_t *checksum) {
 
     // std::cout<<std::endl;  //solved problem 
 }
-//============== HIIU::BASE58 - start ================================================================================
+
+//============== HIIU::SHA256 - start ==============================================================================
+//============== HIIU::BASE58 - start ==============================================================================
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char *pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -640,7 +643,7 @@ std::string EncodeBase58(const unsigned char *pbegin, const unsigned char *pend)
 
     return ret;
 }
-
+//============== HIIU::BASE58 - end ================================================================================
 //============== HIIU::INT.H - start ================================================================================
 //---------- INT.H
 #define NB64BLOCK 5
@@ -1171,9 +1174,7 @@ std::string Int::GetBaseN(int n, char* charset) {
 }
 //============== HIIU::INT.CPP - end ================================================================================
 
-
-//============== HIIU::INTMOD.CPP - start ================================================================================
-//------------INTMOD.CPP 
+//============== HIIU::INT->INTMOD.CPP - start ================================================================================
 #include <emmintrin.h>
 
 static Int     _P;       // Field characteristic
@@ -1270,7 +1271,6 @@ void Int::DivStep62(Int* u, Int* v, int64_t* eta, int* pos, int64_t* uu, int64_t
 }
 
 // ------------------------------------------------
-
 void Int::ModInv() {
 
 	Int u(&_P);
@@ -1604,8 +1604,8 @@ void Int::ModSquareK1(Int* a)
 	bits64[4] = 0;
 }
 
+//============== HIIU::INT->INTMOD.CPP - end ================================================================================
 //============== HIIU::POINT - start ================================================================================
-//------------------POINT.H
 class Point
 {
 	public:
@@ -1620,22 +1620,24 @@ class Point
 		Int x, y, z;
 };
 
-//------------------POINT.CPP
+//------------------
 Point::Point(){}
 Point::~Point(){}
-
+//------------------
 Point::Point(const Point &p){
     x.Set((Int *)&p.x);
     y.Set((Int *)&p.y);
     z.Set((Int *)&p.z);
 }
 
+//------------------
 void Point::Clear(){
     x.SetInt32(0);
     y.SetInt32(0);
     z.SetInt32(0);
 }
 
+//------------------
 void Point::Reduce(){
     Int i(&z);
     i.ModInv();
@@ -1644,6 +1646,7 @@ void Point::Reduce(){
     z.SetInt32(1);
 }
 
+//------------------
 std::string Point::toString()
 {
     std::string ret;
@@ -1652,24 +1655,26 @@ std::string Point::toString()
     ret += "Z=" + z.GetBase16() + "\n";
     return ret;
 }
+
+//============== HIIU::POINT - end ================================================================================
+
 //============== HIIU::CSHA256 - start ================================================================================
 
-//codenow
 class CSHA256
-{
-private:
-	uint32_t s[8];
-	unsigned char buf[64];
-	uint64_t bytes;
+	{
+	private:
+		uint32_t s[8];
+		unsigned char buf[64];
+		uint64_t bytes;
 
-public:
-	static const size_t OUTPUT_SIZE = 32;
+	public:
+		static const size_t OUTPUT_SIZE = 32;
 
-	CSHA256();
-	void Write(const unsigned char* data, size_t len);
-	void Finalize(unsigned char hash[OUTPUT_SIZE]);
+		CSHA256();
+		void Write(const unsigned char* data, size_t len);
+		void Finalize(unsigned char hash[OUTPUT_SIZE]);
 
-};
+	};
 
 CSHA256::CSHA256() {
 	bytes = 0;
@@ -1729,11 +1734,9 @@ void sha256(unsigned char *input, int length, unsigned char *digest) {
 	CSHA256 sha;
 	sha.Write(input, length);
 	sha.Finalize(digest);
-
 }
 //============== HIIU::CSHA256 - end ================================================================================
 //============== HIIU::SECP256K - start ================================================================================
-// ------------- SECP256K1.H 
 class Secp256K1
 {
 	public:
@@ -1742,7 +1745,6 @@ class Secp256K1
 		void Init();
 		Point ComputePublicKey(Int* privKey);
 		void GetHash160(int type, bool isCompressed, Point& pubKey, unsigned char* hash);
-		// void GetHash160_p2sh(bool isCompressed, Point& pubKey, unsigned char* hash);
 
 		Point Add2(Point& p1, Point& p2);
 		Point AddDirect(Point& p1, Point& p2);
@@ -1753,11 +1755,11 @@ class Secp256K1
 		uint8_t GetByte(std::string& str, int idx);
 		Point GTable[256 * 32];     // Generator table
 };
-
-// ------------- SECP256K1.CPP 
+//-------------------------------------------------------
 Secp256K1::Secp256K1(){}
 Secp256K1::~Secp256K1(){}
 
+//-------------------------------------------------------
 void Secp256K1::Init() 
 {
 	// Prime for the finite field
@@ -1771,7 +1773,6 @@ void Secp256K1::Init()
 	G.x.SetBase16("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798");
 	G.y.SetBase16("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8");
 	G.z.SetInt32(1);
-
 
 	// Compute Generator table
 	Point N(G);
@@ -1839,7 +1840,6 @@ void Secp256K1::GetHash160(int type, bool isCompressed, Point& pubKey, unsigned 
 			unsigned char publicKeyBytes[128];
 
 			if (!isCompressed) {
-
 				// Full public key
 				publicKeyBytes[0] = 0x4;
 				pubKey.x.Get32Bytes(publicKeyBytes + 1);
@@ -1847,12 +1847,10 @@ void Secp256K1::GetHash160(int type, bool isCompressed, Point& pubKey, unsigned 
 				sha256_65(publicKeyBytes, shapk);
 
 			} else {
-
 				// Compressed public key
 				publicKeyBytes[0] = pubKey.y.IsEven() ? 0x2 : 0x3;
 				pubKey.x.Get32Bytes(publicKeyBytes + 1);
 				sha256_33(publicKeyBytes, shapk);
-
 			}
 
 			ripemd160_32(shapk, hash);
@@ -1861,7 +1859,6 @@ void Secp256K1::GetHash160(int type, bool isCompressed, Point& pubKey, unsigned 
 
 		case P2SH:
 			{
-
 			// Redeem Script (1 to 1 P2SH)
 			unsigned char script[64];
 
@@ -1871,7 +1868,6 @@ void Secp256K1::GetHash160(int type, bool isCompressed, Point& pubKey, unsigned 
 
 			sha256(script, 22, shapk);
 			ripemd160_32(shapk, hash);
-
 			}
 		break;
 	}
@@ -1964,7 +1960,6 @@ Point Secp256K1::DoubleDirect(Point& p)
 	return r;
 }
 //============== HIIU::SECP256K - end ================================================================================
-
 //============== HIIU::BECH_32 - start ================================================================================
 	static const char* charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 	
@@ -2134,7 +2129,7 @@ Point Hiiu::privToPubkey(char* p_hex)
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 	
-	//print - hiiu
+	//print 
 	printf("\n hash160 : ");	
 	for (int i = 1; i < 21; i++){	
 		printf("%.2x", address[i]);		
@@ -2213,7 +2208,7 @@ void Hiiu::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool is
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 	
-	//print - hiiu
+	//print 
 	printf("\n hash160 : ");
 	for (int i = 1; i < 21; i++){	
 		printf("%.2x", address[i]);			
