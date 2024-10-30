@@ -1732,8 +1732,6 @@ void sha256(unsigned char *input, int length, unsigned char *digest) {
 
 }
 //============== HIIU::CSHA256 - end ================================================================================
-
-
 //============== HIIU::SECP256K - start ================================================================================
 // ------------- SECP256K1.H 
 class Secp256K1
@@ -1965,7 +1963,97 @@ Point Secp256K1::DoubleDirect(Point& p)
 
 	return r;
 }
-//-------------------------------------------------------
+//============== HIIU::SECP256K - end ================================================================================
+
+//============== HIIU::BECH_32 - start ================================================================================
+	static const char* charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+	
+//----------------------------------------------------------
+	static int convert_bits(uint8_t* out, size_t* outlen, int outbits, const uint8_t* in, size_t inlen, int inbits, int pad) {
+	uint32_t val = 0;
+	int bits = 0;
+	uint32_t maxv = (((uint32_t)1) << outbits) - 1;
+	while (inlen--) {
+		val = (val << inbits) | *(in++);
+		bits += inbits;
+		while (bits >= outbits) {
+		bits -= outbits;
+		out[(*outlen)++] = (val >> bits) & maxv;
+		}
+	}
+	if (pad) {
+		if (bits) {
+		out[(*outlen)++] = (val << (outbits - bits)) & maxv;
+		}
+	} else if (((val << (outbits - bits)) & maxv) || bits >= inbits) {
+		return 0;
+	}
+	return 1;
+	}
+
+//----------------------------------------------------------
+	uint32_t bech32_polymod_step(uint32_t pre) {
+	uint8_t b = pre >> 25;
+	return ((pre & 0x1FFFFFF) << 5) ^
+		(-((b >> 0) & 1) & 0x3b6a57b2UL) ^
+		(-((b >> 1) & 1) & 0x26508e6dUL) ^
+		(-((b >> 2) & 1) & 0x1ea119faUL) ^
+		(-((b >> 3) & 1) & 0x3d4233ddUL) ^
+		(-((b >> 4) & 1) & 0x2a1462b3UL);
+	}
+
+//----------------------------------------------------------
+	int bech32_encode(char *output, const char *hrp, const uint8_t *data, size_t data_len) {
+	uint32_t chk = 1;
+	size_t i = 0;
+	while (hrp[i] != 0) {
+		int ch = hrp[i];
+		if (ch < 33 || ch > 126) {
+		return 0;
+		}
+
+		if (ch >= 'A' && ch <= 'Z') return 0;
+		chk = bech32_polymod_step(chk) ^ (ch >> 5);
+		++i;
+	}
+	if (i + 7 + data_len > 90) return 0;
+	chk = bech32_polymod_step(chk);
+	while (*hrp != 0) {
+		chk = bech32_polymod_step(chk) ^ (*hrp & 0x1f);
+		*(output++) = *(hrp++);
+	}
+	*(output++) = '1';
+	for (i = 0; i < data_len; ++i) {
+		if (*data >> 5) return 0;
+		chk = bech32_polymod_step(chk) ^ (*data);
+		*(output++) = charset[*(data++)];
+	}
+	for (i = 0; i < 6; ++i) {
+		chk = bech32_polymod_step(chk);
+	}
+	chk ^= 1;
+	for (i = 0; i < 6; ++i) {
+		*(output++) = charset[(chk >> ((5 - i) * 5)) & 0x1f];
+	}
+	*output = 0;
+	return 1;
+	}
+
+//----------------------------------------------------------
+int segwit_addr_encode(char *output, const char *hrp, int witver, const uint8_t *witprog, size_t witprog_len) {
+	uint8_t data[65];
+	size_t datalen = 0;
+	if (witver > 16) return 0;
+	if (witver == 0 && witprog_len != 20 && witprog_len != 32) return 0;
+	if (witprog_len < 2 || witprog_len > 40) return 0;
+	data[0] = witver;
+	convert_bits(data + 1, &datalen, 5, witprog, witprog_len, 8, 1);
+	++datalen;
+	return bech32_encode(output, hrp, data, datalen);
+}
+
+//============== HIIU::BECH_32 - end ================================================================================
+
 
 //============== HIIU::HIIU =============================================================================
 //============== HIIU::HIIU =============================================================================
@@ -2018,7 +2106,6 @@ Point Hiiu::privToPubkey(char* p_hex)
 }
 
 //--------------------------------------------------------------------
-
  void Hiiu::privToHash160(int type, char* p_hex, uint32_t* _hash160, bool isCompressed)
  {
 
@@ -2035,132 +2122,35 @@ Point Hiiu::privToPubkey(char* p_hex)
 	unsigned char address[25];
 
 	switch (type) { 
-		case P2PKH:{
-			// address[0] = 0x00;
-			break;			
-			}
-		case P2SH:{
+		case P2PKH:
+			break;	
+		case P2SH:
 			if (!isCompressed) {  std::cout<< "\n P2SH: Only compressed key "; exit(-1); }
-			// address[0] = 0x05;
-			break;			
-			}
-		case BECH32:{
+			break;	
+		case BECH32:
 			if (!isCompressed) {std::cout<< "\n BECH32: Only compressed key "; exit(-1);	}
-			// hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
-
-			// char addr_bech32[128];
-			// segwit_addr_encode(addr_bech32, "bc", 0, address + 1, 20);
-			// return std::string(addr_bech32);
 			break;
-			}
 	}
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 	
-			//print - hiiu
-			printf("\n hash160 : ");
-			for (int i = 1; i < 21; i++){	printf("%.2x", address[i]);			}
+	//print - hiiu
+	printf("\n hash160 : ");	
+	for (int i = 1; i < 21; i++){	
+		printf("%.2x", address[i]);		
+	}
 
-	// tách 20 bytes --> uint32_t _hash160[5]
+	// 20 bytes --> uint32_t _hash160[5]
 	memcpy(_hash160, address + 1, 4);
 	memcpy(_hash160 + 1, address + 5, 4);
 	memcpy(_hash160 + 2, address + 9, 4);
 	memcpy(_hash160 + 3, address + 13, 4);
 	memcpy(_hash160 + 4, address + 17, 4);
-		// for (int i = 0; i < 5; i++){	printf("\n --- _hash160[] : %d ", _hash160[i]);	}
 
 	delete hiiu_secp;
  }
+
 //--------------------------------------------------------------------
-
-		//codenow-start --------------
-			static int convert_bits(uint8_t* out, size_t* outlen, int outbits, const uint8_t* in, size_t inlen, int inbits, int pad) {
-			uint32_t val = 0;
-			int bits = 0;
-			uint32_t maxv = (((uint32_t)1) << outbits) - 1;
-			while (inlen--) {
-				val = (val << inbits) | *(in++);
-				bits += inbits;
-				while (bits >= outbits) {
-				bits -= outbits;
-				out[(*outlen)++] = (val >> bits) & maxv;
-				}
-			}
-			if (pad) {
-				if (bits) {
-				out[(*outlen)++] = (val << (outbits - bits)) & maxv;
-				}
-			} else if (((val << (outbits - bits)) & maxv) || bits >= inbits) {
-				return 0;
-			}
-			return 1;
-			}
-		//codenow-end --------------
-		//codenow-start --------------
-			uint32_t bech32_polymod_step(uint32_t pre) {
-			uint8_t b = pre >> 25;
-			return ((pre & 0x1FFFFFF) << 5) ^
-				(-((b >> 0) & 1) & 0x3b6a57b2UL) ^
-				(-((b >> 1) & 1) & 0x26508e6dUL) ^
-				(-((b >> 2) & 1) & 0x1ea119faUL) ^
-				(-((b >> 3) & 1) & 0x3d4233ddUL) ^
-				(-((b >> 4) & 1) & 0x2a1462b3UL);
-			}
-		//codenow-end --------------
-			static const char* charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-
-		//codenow-start --------------
-			int bech32_encode(char *output, const char *hrp, const uint8_t *data, size_t data_len) {
-			uint32_t chk = 1;
-			size_t i = 0;
-			while (hrp[i] != 0) {
-				int ch = hrp[i];
-				if (ch < 33 || ch > 126) {
-				return 0;
-				}
-
-				if (ch >= 'A' && ch <= 'Z') return 0;
-				chk = bech32_polymod_step(chk) ^ (ch >> 5);
-				++i;
-			}
-			if (i + 7 + data_len > 90) return 0;
-			chk = bech32_polymod_step(chk);
-			while (*hrp != 0) {
-				chk = bech32_polymod_step(chk) ^ (*hrp & 0x1f);
-				*(output++) = *(hrp++);
-			}
-			*(output++) = '1';
-			for (i = 0; i < data_len; ++i) {
-				if (*data >> 5) return 0;
-				chk = bech32_polymod_step(chk) ^ (*data);
-				*(output++) = charset[*(data++)];
-			}
-			for (i = 0; i < 6; ++i) {
-				chk = bech32_polymod_step(chk);
-			}
-			chk ^= 1;
-			for (i = 0; i < 6; ++i) {
-				*(output++) = charset[(chk >> ((5 - i) * 5)) & 0x1f];
-			}
-			*output = 0;
-			return 1;
-			}
-
-		//codenow-end --------------
-		//codenow --------------
-		int segwit_addr_encode(char *output, const char *hrp, int witver, const uint8_t *witprog, size_t witprog_len) {
-			uint8_t data[65];
-			size_t datalen = 0;
-			if (witver > 16) return 0;
-			if (witver == 0 && witprog_len != 20 && witprog_len != 32) return 0;
-			if (witprog_len < 2 || witprog_len > 40) return 0;
-			data[0] = witver;
-			convert_bits(data + 1, &datalen, 5, witprog, witprog_len, 8, 1);
-			++datalen;
-			return bech32_encode(output, hrp, data, datalen);
-		}
-		//codenow-end --------------
-
 
 std::string Hiiu::privToAddr(int type, char* p_hex, bool isCompressed)
 {
@@ -2177,23 +2167,20 @@ std::string Hiiu::privToAddr(int type, char* p_hex, bool isCompressed)
 	unsigned char address[25];
 
 	switch (type) { 
-		case P2PKH:{
+		case P2PKH:
 			address[0] = 0x00;
-			break;			
-		}
-		case P2SH:{
+			break;
+		case P2SH:
 			if (!isCompressed) {  return " P2SH: Only compressed key ";  }
 			address[0] = 0x05;
-			break;			
-		}
-		case BECH32:{
+			break;	
+		case BECH32:
 			if (!isCompressed) {	return " BECH32: Only compressed key ";	}
 			hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 
 			char addr_bech32[128];
 			segwit_addr_encode(addr_bech32, "bc", 0, address + 1, 20);
-			return std::string(addr_bech32);
-		}
+			return std::string(addr_bech32); 
 	}
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);	
@@ -2214,31 +2201,23 @@ void Hiiu::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool is
 	unsigned char address[25];
 
 	switch (type) { 
-		case P2PKH:{
-			// address[0] = 0x00;
-			break;			
-			}
-		case P2SH:{
+		case P2PKH:
+			break;	
+		case P2SH:
 			if (!isCompressed) {  std::cout<< "\n P2SH: Only compressed key "; exit(-1); }
-			// address[0] = 0x05;
-			break;			
-			}
-		case BECH32:{
+			break;	
+		case BECH32:
 			if (!isCompressed) {std::cout<< "\n BECH32: Only compressed key "; exit(-1);	}
-			// hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
-
-			// char addr_bech32[128];
-			// segwit_addr_encode(addr_bech32, "bc", 0, address + 1, 20);
-			// return std::string(addr_bech32);
 			break;
-			}
 	}
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 	
-			//print - hiiu
-			printf("\n hash160 : ");
-			for (int i = 1; i < 21; i++){	printf("%.2x", address[i]);			}
+	//print - hiiu
+	printf("\n hash160 : ");
+	for (int i = 1; i < 21; i++){	
+		printf("%.2x", address[i]);			
+	}
 
 	// tách 20 bytes --> uint32_t _hash160[5]
 	memcpy(_hash160, address + 1, 4);
@@ -2246,7 +2225,6 @@ void Hiiu::pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160,  bool is
 	memcpy(_hash160 + 2, address + 9, 4);
 	memcpy(_hash160 + 3, address + 13, 4);
 	memcpy(_hash160 + 4, address + 17, 4);
-		// for (int i = 0; i < 5; i++){	printf("\n --- _hash160[] : %d ", _hash160[i]);	}
 
 	delete hiiu_secp;
 } 
@@ -2259,23 +2237,20 @@ std::string Hiiu::pubkeyToAddr(int type, Point& pubKey, bool isCompressed)
 	unsigned char address[25];
 
 	switch (type) { 
-		case P2PKH:{
+		case P2PKH:
 			address[0] = 0x00;
 			break;			
-		}
-		case P2SH:{
+		case P2SH:
 			if (!isCompressed) {  return " P2SH: Only compressed key ";  }
 			address[0] = 0x05;
 			break;			
-		}
-		case BECH32:{
+		case BECH32:
 			if (!isCompressed) {	return " BECH32: Only compressed key ";	}
 			hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);
 
 			char addr_bech32[128];
 			segwit_addr_encode(addr_bech32, "bc", 0, address + 1, 20);
 			return std::string(addr_bech32);
-		}
 	}
 
 	hiiu_secp->GetHash160(type, isCompressed, pubKey, address + 1);	
@@ -2311,10 +2286,6 @@ std::string Hiiu::hash160ToAddr(uint32_t* _hash160, bool isCompressed){
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
 
 
 int main(){
@@ -2336,11 +2307,6 @@ int main(){
 
 
 
-
-
-
-
-
 	//priv --> hash160 
 	uint32_t h[5]; 
 	hiiu.privToHash160(P2PKH, "2832ed74f2b5e35ee", h, isCompressed);
@@ -2348,11 +2314,6 @@ int main(){
 	hiiu.privToHash160(P2SH, "2832ed74f2b5e35ee", h, isCompressed);
 	hiiu.privToHash160(BECH32, "2832ed74f2b5e35ee", h, isCompressed);
 	std::cout<<"\n\n -------------------------------------------- \n";
-
-
-
-
-
 
 
 
@@ -2367,8 +2328,6 @@ int main(){
 	hiiu.pubkeyToHash160(BECH32, publicKey, hash160, isCompressed);			
 			// for (int i = 0; i < 5; i++){	printf("\n --- _hash160[] : %d ", get_h[i]);
 	std::cout<<"\n\n -------------------------------------------- \n";
-
-
 
 
 
