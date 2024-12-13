@@ -1,5 +1,5 @@
-kk:
-	g++ -Wno-write-strings genAddrBTC.cpp -o k
+all:
+	g++ -Wno-write-strings genAddrBTC.cpp -o hiiu
 clean:
-	@rm -f k
+	@rm -f hiiu
 	@echo clean done !
