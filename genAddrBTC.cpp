@@ -2045,15 +2045,9 @@ int segwit_addr_encode(char *output, const char *hrp, int witver, const uint8_t 
 //============== BECH_32 - end ================================================================================
 
 
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
-//============== HIIU =============================================================================
+//============== HIIU::BITCOIN - start =============================================================================
 
-class Bitcoin 
+class Bitcoin  
 {
 	public:
 		Point privToPubkey(char* p_hex); //return POINT
@@ -2063,7 +2057,8 @@ class Bitcoin
 		void pubkeyToHash160(int type, Point& pubKey, uint32_t* _hash160, bool isCompressed); 
 		std::string pubkeyToAddr(int type, Point& pubKey, bool isCompressed); //return STRING 
 
-		std::string hash160ToAddr(uint32_t* _hash160, bool isCompressed); //return STRING 
+		std::string hash160ToAddr(int type, uint32_t* _hash160, bool isCompressed); //return STRING 
+		// std::string hash160ToAddr(uint32_t* _hash160, bool isCompressed); //return STRING 
 };  
 //-------------------------------------------------------------------- 
 
@@ -2244,23 +2239,59 @@ std::string Bitcoin::pubkeyToAddr(int type, Point& pubKey, bool isCompressed)
 }
 
 //--------------------------------------------------------------------
-std::string Bitcoin::hash160ToAddr(uint32_t* _hash160, bool isCompressed){
+// std::string Bitcoin::hash160ToAddr(uint32_t* _hash160, bool isCompressed){
+// 	// _hash160[] = 1784337440; 1882531190; -1293883124; -1810242794; -1514644173;
+// 	// 	h[0]      = 1784337440; 1882531190;  3001084172;  2484724502;  2780323123 ;
+// 	Secp256K1* hiiu_secp = new Secp256K1();   
+// 	hiiu_secp->Init();	
+
+// 	unsigned char address[25];
+// 	address[0] = 0x00;
+// 	memcpy(address + 1, _hash160, 20);
+// 	sha256_checksum(address, 21, address + 21);
+// 	std::string addr = EncodeBase58(address, address + 25);
+
+// 	delete hiiu_secp;
+// 	return addr;
+	
+// }
+
+std::string Bitcoin::hash160ToAddr(int type, uint32_t* _hash160, bool isCompressed){
 	// _hash160[] = 1784337440; 1882531190; -1293883124; -1810242794; -1514644173;
 	// 	h[0]      = 1784337440; 1882531190;  3001084172;  2484724502;  2780323123 ;
+
 	Secp256K1* hiiu_secp = new Secp256K1();   
 	hiiu_secp->Init();	
 
 	unsigned char address[25];
-	address[0] = 0x00;
+	// address[0] = 0x00;
+	switch (type) { 
+		case P2PKH:
+			address[0] = 0x00;
+			break;			
+		case P2SH:
+			if (!isCompressed) {  return " P2SH: Only compressed key ";  }
+			address[0] = 0x05;
+			break;	
+		case BECH32: // codenow-here
+			//code
+			if (!isCompressed) {	return " BECH32: Only compressed key ";	}
+
+			memcpy(address + 1, _hash160, 20);
+			char addr_bech32[128];
+			segwit_addr_encode(addr_bech32, "bc", 0, address + 1, 20);
+			return std::string(addr_bech32);
+			break;
+	}
+
 	memcpy(address + 1, _hash160, 20);
 	sha256_checksum(address, 21, address + 21);
 	std::string addr = EncodeBase58(address, address + 25);
 
 	delete hiiu_secp;
 	return addr;
-	
 }
-//--------------------------------------------------------------------
+//============== HIIU::BITCOIN - end =============================================================================
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
@@ -2324,5 +2355,15 @@ int main(){
 
 
 	printf("\n\n\n");
+
+	//priv --> hash160 
+	uint32_t hh[5]; 
+	bitcoin.privToHash160(BECH32, "2832ed74f2b5e35ee", hh, isCompressed);
+	//hash160 --> addr 
+	std::string aa;
+	aa = bitcoin.hash160ToAddr(BECH32, hh, isCompressed);
+	std::cout << "\n aa : " << aa;
+
+	printf("\n\n\n\n\n\n\n\n\n\n\n");
 	return 0;
 };
